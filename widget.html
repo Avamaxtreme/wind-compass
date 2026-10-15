@@ -326,19 +326,22 @@
     </div></div>
   </div>
 </div>
+<!-- Hidden compatibility controls used by the dashboard rendering code. -->
+<div hidden aria-hidden="true" id="internalControls">
+  <span id="dialDeg"></span><span id="dirText"></span><span id="dirFull"></span><span id="value"></span>
+  <input id="pivotX" value="50"><input id="pivotY" value="50">
+  <input id="needleLen" value="34"><input id="needleBase" value="0">
+  <input id="speedMax" value="50"><input id="speedRed" value="30">
+  <input id="tableMinStep" value="10">
+  <select id="speedUnit"><option value="ms" selected>м/с</option><option value="kmh">км/ч</option></select>
+  <select id="tempUnit"><option value="c" selected>°C</option><option value="f">°F</option></select>
+  <select id="pressUnit"><option value="hpa" selected>гПа</option><option value="mmhg">мм</option></select>
+  <span id="thTemp"></span><span id="thSpeed"></span><span id="thPress"></span>
+</div>
 <script>
 "use strict";
 const CUR  = window.__CUR__  || {};
 const HIST = window.__HIST__ || [];
-const el = (id) => document.getElementById(id);
-const ui = {
-  svg: el("needleSvg"), speedSvg: el("speedSvg"), speedNum: el("speedNum"),
-  tempSvg: el("tempSvg"), chartLast: el("chartLast"),
-  status: el("status"), badge: el("modeBadge"),
-  tableToggle: el("tableToggle"), tableCard: el("tableCard"),
-  tableBody: el("tableBody"), tableInfo: el("tableInfo"), tableStep: el("tableStep"),
-};
-
 const RU = ["С","ССВ","СВ","ВСВ","В","ВЮВ","ЮВ","ЮЮВ","Ю","ЮЮЗ","ЮЗ","ЗЮЗ","З","ЗСЗ","СЗ","ССЗ"];
 
 const el = (id) => document.getElementById(id);
@@ -804,8 +807,6 @@ function renderTable() {
   }
   ui.tableInfo.textContent = info;
 }
-
-async function refresh() {
 
 /* ---- init ---- */
 buildNeedle();
