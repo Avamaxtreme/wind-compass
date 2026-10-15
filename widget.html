@@ -163,7 +163,11 @@
     box-shadow:0 16px 44px rgba(0,0,0,.45), 0 0 0 1px rgba(255,255,255,.05);
     padding:14px 16px 12px;
   }
-  .table-ctl{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+  .table-head{display:flex;align-items:center;gap:12px;width:100%}
+  .table-ctl{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);flex-shrink:0}
+  .table-toggle{flex:1;min-width:0}
+  .table-toggle>span{overflow-wrap:anywhere}
+  .table-ctl select{color:var(--text);background:var(--panel-2);border:1px solid var(--line);border-radius:8px;max-width:150px}
   .table-ctl label{margin:0;white-space:nowrap}
   .table-ctl select{width:auto;padding:5px 8px;font-size:12px}
   .table-scroll{max-height:380px;overflow:auto;border-radius:10px;box-shadow:0 0 0 1px rgba(255,255,255,.06)}
@@ -171,9 +175,14 @@
   .table-toggle:hover{opacity:.85}
   .table-arrow{margin-left:auto;flex-shrink:0;width:20px;height:20px;opacity:.55;transition:transform .25s}
   .table-card.open .table-arrow{transform:rotate(180deg);opacity:.9}
-  .table-body-wrap{display:grid;grid-template-rows:0fr;transition:grid-template-rows .28s ease}
-  .table-body-wrap>div{overflow:hidden}
-  .table-card.open .table-body-wrap{grid-template-rows:1fr}
+  .table-body-wrap{display:block;max-height:0;overflow:hidden;transition:max-height .3s ease}
+  .table-card.open .table-body-wrap{max-height:440px}
+  .table-body-wrap>div{min-height:0}
+  .dir-wrap,.speed-wrap{width:100%;max-width:420px;margin-left:auto;margin-right:auto;aspect-ratio:400/330;flex:0 0 auto}
+  .row{min-width:0}
+  .gauge{overflow:hidden}
+  .stage{width:100%;min-height:0}
+  @media(max-width:700px){.table-head{align-items:flex-start;flex-wrap:wrap}.table-toggle{width:100%;flex-basis:100%}.table-ctl{margin-left:0}.row{grid-template-columns:minmax(0,1fr)}}
 
   .data-table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:15px}
   .data-table th{
@@ -304,9 +313,12 @@
     <div class="status" id="status"></div>
   </div>
   <div class="table-card" id="tableCard">
-    <button class="table-toggle" id="tableToggle" aria-expanded="false">
-      <span>ДАННЫЕ ЗА 6 ЧАСОВ · <span id="tableInfo">нет данных</span></span>
-      <div class="table-ctl" onclick="event.stopPropagation()">
+    <div class="table-head">
+      <button type="button" class="table-toggle" id="tableToggle" aria-expanded="false">
+        <span>ДАННЫЕ ЗА 6 ЧАСОВ · <span id="tableInfo">нет данных</span></span>
+        <svg class="table-arrow" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><polyline points="4,7 10,13 16,7"/></svg>
+      </button>
+      <div class="table-ctl">
         <label for="tableStep">Шаг</label>
         <select id="tableStep">
           <option value="0">все записи</option><option value="1">1 мин</option>
@@ -314,8 +326,7 @@
           <option value="30">30 мин</option>
         </select>
       </div>
-      <svg class="table-arrow" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><polyline points="4,7 10,13 16,7"/></svg>
-    </button>
+    </div>
     <div class="table-body-wrap"><div>
       <div class="table-scroll" style="margin-top:10px">
         <table class="data-table"><thead><tr>
