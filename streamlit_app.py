@@ -20,15 +20,15 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-API_BASE   = "https://dev.rightech.io"
-TOKEN      = st.secrets.get("RIGHTECH_TOKEN", "")
-OBJECT_ID  = st.secrets.get("OBJECT_ID", "")
-PARAM_DIR  = st.secrets.get("PARAM_DIR",   "windDirection")
-PARAM_SPD  = st.secrets.get("PARAM_SPEED", "windSpeed")
-PARAM_TEMP = st.secrets.get("PARAM_TEMP",  "temperature")
-PARAM_PRESS= st.secrets.get("PARAM_PRESS", "pressure")
-PARAM_HUM  = st.secrets.get("PARAM_HUM",   "humidity")
-REFRESH_SEC= int(st.secrets.get("REFRESH_SEC", 10))
+API_BASE    = "https://dev.rightech.io"
+TOKEN       = st.secrets.get("RIGHTECH_TOKEN", "")
+OBJECT_ID   = st.secrets.get("OBJECT_ID", "")
+PARAM_DIR   = st.secrets.get("PARAM_DIR",   "windDirection")
+PARAM_SPD   = st.secrets.get("PARAM_SPEED", "windSpeed")
+PARAM_TEMP  = st.secrets.get("PARAM_TEMP",  "temperature")
+PARAM_PRESS = st.secrets.get("PARAM_PRESS", "pressure")
+PARAM_HUM   = st.secrets.get("PARAM_HUM",   "humidity")
+REFRESH_SEC = int(st.secrets.get("REFRESH_SEC", 10))
 
 
 def api_get(path):
@@ -49,6 +49,7 @@ def api_get(path):
 
 
 def find_deep(obj, key, depth=0):
+    """Регистронезависимый поиск значения по ключу на любой глубине."""
     if obj is None or depth > 8:
         return None
     if isinstance(obj, str):
@@ -60,8 +61,14 @@ def find_deep(obj, key, depth=0):
                 return None
         return None
     if isinstance(obj, dict):
-        if key in obj:
-            return obj[key]
+        lk = str(key).lower()
+        # сначала точное совпадение без учёта регистра
+        for k in obj.keys():
+            if str(k).lower() == lk:
+                v = obj[k]
+                if v is not None and not isinstance(v, (dict, list)):
+                    return v
+        # потом рекурсивный обход
         for v in obj.values():
             r = find_deep(v, key, depth + 1)
             if r is not None:
@@ -123,6 +130,8 @@ def packet_time_ms(p):
 
 
 def fetch_history(hours=6, limit=1000):
+    """Скачивает пакеты Rightech за последние N часов и склеивает их по времени
+    (окно 2 секунды). В итоге в одной строке — все 5 параметров."""
     to_dt   = datetime.now(timezone.utc)
     from_dt = to_dt - timedelta(hours=hours + 1)
     fmt = "%Y-%m-%dT%H:%M"
@@ -133,25 +142,40 @@ def fetch_history(hours=6, limit=1000):
     data, err = api_get(path)
     if err or not isinstance(data, list):
         return []
-    rows = []
+
+    merged = {}
     for p in data:
         if not isinstance(p, dict):
             continue
         t_ms = packet_time_ms(p)
         if t_ms is None:
             continue
-        row = {
-            "t":     t_ms,
-            "temp":  to_num(find_deep(p, PARAM_TEMP)),
-            "dir":   to_num(find_deep(p, PARAM_DIR)),
-            "speed": to_num(find_deep(p, PARAM_SPD)),
-            "press": to_num(find_deep(p, PARAM_PRESS)),
-            "hum":   to_num(find_deep(p, PARAM_HUM)),
-        }
-        if any(row[k] is not None for k in ("temp", "dir", "speed", "press", "hum")):
-            rows.append(row)
+        key = round(t_ms / 2000)
+        if key not in merged:
+            merged[key] = {
+                "t": t_ms,
+                "temp": None, "dir": None, "speed": None,
+                "press": None, "hum": None,
+            }
+        row = merged[key]
+
+        for field, pk in (
+            ("temp",  PARAM_TEMP),
+            ("dir",   PARAM_DIR),
+            ("speed", PARAM_SPD),
+            ("press", PARAM_PRESS),
+            ("hum",   PARAM_HUM),
+        ):
+            if row[field] is None:
+                v = to_num(find_deep(p, pk))
+                if v is not None:
+                    row[field] = v
+
+    rows = list(merged.values())
     rows.sort(key=lambda r: r["t"])
-    # оставляем только последние 6 часов от последнего пакета
+    rows = [r for r in rows if any(
+        r[k] is not None for k in ("temp", "dir", "speed", "press", "hum"))]
+
     if rows:
         cutoff = rows[-1]["t"] - hours * 3600 * 1000
         rows = [r for r in rows if r["t"] >= cutoff]
