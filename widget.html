@@ -2,9 +2,9 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Метеостанция — ветер и температура (Rightech)</title>
 <style>
-
   :root{
     --bg:#0f1420;
     --panel:#161d2e;
@@ -72,48 +72,6 @@
     transform-origin:200px 165px;
     transition:transform .9s cubic-bezier(.22,.68,.24,1);
   }
-  .dial{
-    position:absolute;inset:0;border-radius:50%;
-    background:#fff url("assets/compass.jpg") center/100% 100% no-repeat;
-    user-select:none;overflow:hidden;
-    box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);
-  }
-  .dial svg{
-    position:absolute;inset:0;width:100%;height:100%;display:block;
-    transform-origin:var(--pivot-x) var(--pivot-y);
-    transition:transform .9s cubic-bezier(.22,.68,.24,1);
-    will-change:transform;pointer-events:none;
-  }
-  .dial__deg{
-    position:absolute;left:50%;bottom:3%;transform:translateX(-50%);
-    background:rgba(16,22,36,.85);border:1px solid rgba(255,255,255,.16);
-    color:#fff;font-weight:600;font-size:14px;padding:3px 12px;border-radius:999px;
-    pointer-events:none;white-space:nowrap;backdrop-filter:blur(2px);
-  }
-  .guides{position:absolute;inset:0;pointer-events:none;display:none}
-  .dial-wrap.calibrate .guides{display:block}
-  .guides i{position:absolute;background:rgba(0,180,255,.85)}
-  .guides i.h{left:0;right:0;height:1px;top:var(--pivot-y)}
-  .guides i.v{top:0;bottom:0;width:1px;left:var(--pivot-x)}
-  .guides b{
-    position:absolute;width:14px;height:14px;margin:-7px 0 0 -7px;
-    left:var(--pivot-x);top:var(--pivot-y);border-radius:50%;
-    border:1.5px solid rgba(0,180,255,.95);pointer-events:auto;cursor:grab;
-    background:rgba(0,180,255,.25);
-  }
-  .guides b:active{cursor:grabbing}
-
-  .readout{display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap}
-  .readout__value{
-    font-size:clamp(24px, 3.6vh, 44px);font-weight:700;color:var(--accent);
-    line-height:1;font-variant-numeric:tabular-nums;
-  }
-  .readout__value small{font-size:.5em;font-weight:600;margin-left:2px}
-  .readout__dir{
-    font-size:clamp(16px, 2.2vh, 26px);font-weight:600;
-    border-left:1px solid var(--line);padding-left:16px;
-  }
-  .readout__dir small{color:var(--muted);font-weight:400;font-size:.5em;margin-left:6px}
 
   .speed-wrap{
     position:relative;width:100%;
@@ -163,11 +121,7 @@
     box-shadow:0 16px 44px rgba(0,0,0,.45), 0 0 0 1px rgba(255,255,255,.05);
     padding:14px 16px 12px;
   }
-  .table-head{display:flex;align-items:center;gap:12px;width:100%}
-  .table-ctl{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);flex-shrink:0}
-  .table-toggle{flex:1;min-width:0}
-  .table-toggle>span{overflow-wrap:anywhere}
-  .table-ctl select{color:var(--text);background:var(--panel-2);border:1px solid var(--line);border-radius:8px;max-width:150px}
+  .table-ctl{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
   .table-ctl label{margin:0;white-space:nowrap}
   .table-ctl select{width:auto;padding:5px 8px;font-size:12px}
   .table-scroll{max-height:380px;overflow:auto;border-radius:10px;box-shadow:0 0 0 1px rgba(255,255,255,.06)}
@@ -175,14 +129,9 @@
   .table-toggle:hover{opacity:.85}
   .table-arrow{margin-left:auto;flex-shrink:0;width:20px;height:20px;opacity:.55;transition:transform .25s}
   .table-card.open .table-arrow{transform:rotate(180deg);opacity:.9}
-  .table-body-wrap{display:block;max-height:0;overflow:hidden;transition:max-height .3s ease}
-  .table-card.open .table-body-wrap{max-height:440px}
-  .table-body-wrap>div{min-height:0}
-  .dir-wrap,.speed-wrap{width:100%;max-width:420px;margin-left:auto;margin-right:auto;aspect-ratio:400/330;flex:0 0 auto}
-  .row{min-width:0}
-  .gauge{overflow:hidden}
-  .stage{width:100%;min-height:0}
-  @media(max-width:700px){.table-head{align-items:flex-start;flex-wrap:wrap}.table-toggle{width:100%;flex-basis:100%}.table-ctl{margin-left:0}.row{grid-template-columns:minmax(0,1fr)}}
+  .table-body-wrap{display:grid;grid-template-rows:0fr;transition:grid-template-rows .28s ease}
+  .table-body-wrap>div{overflow:hidden}
+  .table-card.open .table-body-wrap{grid-template-rows:1fr}
 
   .data-table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:15px}
   .data-table th{
@@ -200,251 +149,176 @@
   .data-table td.t-press,.data-table td.t-hum{color:#a0b4d8}
   .data-table td.empty{text-align:center;color:var(--muted);padding:22px}
 
-  .toggle-float{display:none!important}
-  #toggle{display:none!important}
   .status{text-align:center;font-size:13px;color:var(--muted);min-height:20px}
   .status.is-ok{color:var(--ok)}
   .status.is-err{color:var(--err)}
-
-  .panel{
-    flex:0 0 var(--panel-w);
-    width:var(--panel-w);
-    background:linear-gradient(180deg, #141b2b 0%, #111827 100%);
-    border-left:1px solid var(--line);
-    overflow-y:auto;
-    max-height:100vh;
-    padding:18px;
-  }
-  .panel__head{
-    display:flex;align-items:center;justify-content:space-between;
-    margin-bottom:14px;position:sticky;top:0;
-    background:linear-gradient(180deg,#141b2b 70%, rgba(20,27,43,0));
-    padding-bottom:10px;z-index:2;
-  }
-  .panel__head h2{font-size:14px;font-weight:600;margin:0;color:var(--text)}
-  .panel .close{display:none;font-size:20px;line-height:1;padding:2px 10px;}
-  .sect{
-    font-size:11px;text-transform:uppercase;letter-spacing:.08em;
-    color:var(--muted);margin:16px 0 8px;
-  }
-  .sect:first-of-type{margin-top:4px}
-  .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-  .grid .full{grid-column:1/-1}
-  label{display:block;font-size:11.5px;color:var(--muted);margin-bottom:4px}
-  input,select{
-    width:100%;background:var(--panel-2);border:1px solid var(--line);color:var(--text);
-    border-radius:9px;padding:8px 10px;font-size:13px;font-family:inherit;
-  }
-  input:focus,select:focus{outline:none;border-color:#4a6ea8}
-  input[type=range]{padding:0;height:22px}
-  .hint-text{font-size:11.5px;color:var(--muted);margin-top:10px;line-height:1.55}
-  .hint-text code{background:#0c1220;border:1px solid var(--line);border-radius:5px;padding:1px 5px;font-size:11px}
-  .actions{display:flex;flex-direction:column;gap:8px;margin-top:16px}
-  button{
-    font:inherit;font-size:13px;color:var(--text);background:var(--panel-2);
-    border:1px solid var(--line);border-radius:9px;padding:9px 14px;cursor:pointer;
-  }
-  button:hover{border-color:#4a6ea8}
-  button.primary{background:#2b4a7d;border-color:#3d63a3}
-  button.primary:hover{background:#33578f}
-  button.active{background:#14532d;border-color:#2f7d4f}
-  #toggle{white-space:nowrap}
-  .toggle-float{
-    position:absolute;top:18px;right:18px;z-index:10;display:none;
-    box-shadow:0 6px 18px rgba(0,0,0,.35);
-  }
-  body.panel-closed .toggle-float{display:block}
-  .input-row{display:flex;gap:6px;align-items:stretch}
-  .input-row input{flex:1;min-width:0}
-  .input-row button{padding:0 12px;font-size:12px;white-space:nowrap}
-  .field-note{font-size:11px;color:var(--muted);margin-top:4px}
-  .field-note.warn{color:var(--err)}
-
-  .demo-row{display:flex;align-items:center;gap:10px;margin-top:12px}
-  .demo-row input[type=range]{flex:1}
-  .demo-row .val{font-variant-numeric:tabular-nums;color:var(--muted);font-size:12px;min-width:46px;text-align:right}
-
-  .backdrop{display:none}
-
-  @media (max-width: 1100px){
-    .row{grid-template-columns:1fr;}
-  }
-  @media (max-width: 900px){
-    .panel{
-      position:fixed;top:0;right:0;bottom:0;height:100vh;
-      transform:translateX(100%);transition:transform .25s ease;
-      z-index:20;box-shadow:-18px 0 40px rgba(0,0,0,.5);
-      max-height:none;
-    }
-    body.panel-open .panel{transform:translateX(0)}
-    .panel .close{display:block}
-    .backdrop{
-      position:fixed;inset:0;background:rgba(6,10,18,.55);z-index:15;
-    }
-    body.panel-open .backdrop{display:block}
-    .stage{padding:14px}
-  }
-  @media (min-width: 901px){
-    body.panel-closed .panel{display:none}
-  }
-
 </style>
 </head>
 <body>
-<div class="stage">
-  <div class="head"><h1>Метеостанция<span class="badge" id="modeBadge">онлайн</span></h1></div>
-  <div class="row">
-    <div class="gauge"><div class="gauge__title">Направление ветра</div>
-      <div class="dir-wrap"><svg id="needleSvg" viewBox="0 0 400 330" preserveAspectRatio="xMidYMid meet"></svg></div>
-    </div>
-    <div class="gauge"><div class="gauge__title">Скорость ветра</div>
-      <div class="speed-wrap"><svg id="speedSvg" viewBox="0 0 400 330" preserveAspectRatio="xMidYMid meet"></svg>
-        <div class="speed-value"><div class="speed-value__num" id="speedNum">—<small>м/с</small></div>
-          <div class="speed-value__cap">скорость ветра</div></div>
+<div class="app">
+  <main class="stage">
+    <div class="head">
+      <div>
+        <h1>Метеостанция<span class="badge" id="modeBadge">онлайн</span></h1>
+        <div class="hint" id="headHint">данные Rightech</div>
       </div>
     </div>
-  </div>
-  <div class="chart-card">
-    <div class="chart-card__head">
-      <h2>Температура · последние 120 точек</h2>
-      <div class="chart-card__last" id="chartLast">—<small>°C</small></div>
+
+    <div class="row">
+      <div class="gauge">
+        <div class="gauge__title">Направление ветра</div>
+        <div class="dial-wrap dir-wrap" id="dialWrap">
+          <svg id="needleSvg" viewBox="0 0 400 330" preserveAspectRatio="xMidYMid meet" aria-hidden="true"></svg>
+        </div>
+        <div hidden>
+          <div id="dialDeg"></div>
+          <div id="value"></div><span id="dirText"></span><small id="dirFull"></small>
+        </div>
+      </div>
+
+      <div class="gauge">
+        <div class="gauge__title">Скорость ветра</div>
+        <div class="speed-wrap" id="speedWrap">
+          <svg id="speedSvg" viewBox="0 0 400 330" preserveAspectRatio="xMidYMid meet" aria-hidden="true"></svg>
+          <div class="speed-value">
+            <div class="speed-value__num" id="speedNum">—<small id="speedUnitSmall">м/с</small></div>
+            <div class="speed-value__cap">скорость ветра</div>
+          </div>
+        </div>
+      </div>
     </div>
-    <div class="chart-wrap"><svg id="tempSvg" viewBox="0 0 1000 260" preserveAspectRatio="none"></svg></div>
-    <div class="status" id="status"></div>
-  </div>
-  <div class="table-card" id="tableCard">
-    <div class="table-head">
-      <button type="button" class="table-toggle" id="tableToggle" aria-expanded="false">
+
+    <div class="chart-card">
+      <div class="chart-card__head">
+        <h2>Температура · последние <span id="chartPointsLabel">120</span> точек</h2>
+        <div class="chart-card__last" id="chartLast">—<small>°C</small></div>
+      </div>
+      <div class="chart-wrap">
+        <svg id="tempSvg" viewBox="0 0 1000 260" preserveAspectRatio="none" aria-hidden="true"></svg>
+      </div>
+      <div class="status" id="status">Данные Rightech</div>
+    </div>
+
+    <div class="table-card" id="tableCard">
+      <button class="table-toggle" id="tableToggle" aria-expanded="false">
         <span>ДАННЫЕ ЗА 6 ЧАСОВ · <span id="tableInfo">нет данных</span></span>
-        <svg class="table-arrow" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><polyline points="4,7 10,13 16,7"/></svg>
+        <div class="table-ctl" onclick="event.stopPropagation()">
+          <label for="tableStep">Шаг</label>
+          <select id="tableStep">
+            <option value="0">все записи</option>
+            <option value="1">1 мин</option>
+            <option value="5">5 мин</option>
+            <option value="10">10 мин</option>
+            <option value="30">30 мин</option>
+          </select>
+        </div>
+        <svg class="table-arrow" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+          <polyline points="4,7 10,13 16,7"/>
+        </svg>
       </button>
-      <div class="table-ctl">
-        <label for="tableStep">Шаг</label>
-        <select id="tableStep">
-          <option value="0">все записи</option><option value="1">1 мин</option>
-          <option value="5">5 мин</option><option value="10">10 мин</option>
-          <option value="30">30 мин</option>
-        </select>
+      <div class="table-body-wrap">
+        <div>
+          <div class="table-scroll" style="margin-top:10px">
+            <table class="data-table">
+              <thead><tr>
+                <th>Время</th><th id="thTemp">Темп.</th><th>Направление</th><th id="thSpeed">Скор.</th><th id="thPress">Давл.</th><th>Влажность, %</th>
+              </tr></thead>
+              <tbody id="tableBody"></tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
-    <div class="table-body-wrap"><div>
-      <div class="table-scroll" style="margin-top:10px">
-        <table class="data-table"><thead><tr>
-          <th>Время</th><th>Темп., °C</th><th>Направление</th>
-          <th>Скор., м/с</th><th>Давл., гПа</th><th>Влажность, %</th>
-        </tr></thead><tbody id="tableBody"></tbody></table>
-      </div>
-    </div></div>
-  </div>
+  </main>
 </div>
-<!-- Hidden compatibility controls used by the dashboard rendering code. -->
-<div hidden aria-hidden="true" id="internalControls">
-  <span id="dialDeg"></span><span id="dirText"></span><span id="dirFull"></span><span id="value"></span>
-  <input id="pivotX" value="50"><input id="pivotY" value="50">
-  <input id="needleLen" value="34"><input id="needleBase" value="0">
-  <input id="speedMax" value="50"><input id="speedRed" value="30">
-  <input id="tableMinStep" value="10">
-  <select id="speedUnit"><option value="ms" selected>м/с</option><option value="kmh">км/ч</option></select>
-  <select id="tempUnit"><option value="c" selected>°C</option><option value="f">°F</option></select>
-  <select id="pressUnit"><option value="hpa" selected>гПа</option><option value="mmhg">мм</option></select>
-  <span id="thTemp"></span><span id="thSpeed"></span><span id="thPress"></span>
-</div>
+
 <script>
 "use strict";
+/* =========================================================================
+   Метеостанция: компас + спидометр (верх) и график температуры (низ).
+   Данные приходят из Python через window.__CUR__ / window.__HIST__.
+   ========================================================================= */
+
 const CUR  = window.__CUR__  || {};
 const HIST = window.__HIST__ || [];
-const RU = ["С","ССВ","СВ","ВСВ","В","ВЮВ","ЮВ","ЮЮВ","Ю","ЮЮЗ","ЮЗ","ЗЮЗ","З","ЗСЗ","СЗ","ССЗ"];
 
+const RU = ["С","ССВ","СВ","ВСВ","В","ВЮВ","ЮВ","ЮЮВ","Ю","ЮЮЗ","ЮЗ","ЗЮЗ","З","ЗСЗ","СЗ","ССЗ"];
 const el = (id) => document.getElementById(id);
 const ui = {
-  wrap: el("dialWrap"), dial: el("dial"), svg: el("needleSvg"), dialDeg: el("dialDeg"),
+  wrap: el("dialWrap"), svg: el("needleSvg"), dialDeg: el("dialDeg"),
   value: el("value"), dirText: el("dirText"), dirFull: el("dirFull"),
-  status: el("status"), badge: el("modeBadge"), panel: el("panel"), headHint: el("headHint"),
-  api: el("api"), token: el("token"), objectId: el("objectId"), interval: el("interval"),
-  param: el("param"), convention: el("convention"),
+  status: el("status"), badge: el("modeBadge"), headHint: el("headHint"),
   pivotX: el("pivotX"), pivotY: el("pivotY"), needleLen: el("needleLen"), needleBase: el("needleBase"),
-  speedParam: el("speedParam"), speedMax: el("speedMax"), speedRed: el("speedRed"), speedUnit: el("speedUnit"),
-  speedWrap: el("speedWrap"), speedSvg: el("speedSvg"), speedNum: el("speedNum"),
-  tempParam: el("tempParam"), tempLimit: el("tempLimit"), tempUnit: el("tempUnit"),
+  speedMax: el("speedMax"), speedRed: el("speedRed"), speedUnit: el("speedUnit"),
+  speedSvg: el("speedSvg"), speedNum: el("speedNum"),
+  tempLimit: el("tempLimit"), tempUnit: el("tempUnit"),
   tempSvg: el("tempSvg"), chartLast: el("chartLast"), chartPointsLabel: el("chartPointsLabel"),
-  demoRow: el("demoRow"), demoRange: el("demoRange"), demoVal: el("demoVal"),
-  handle: el("pivotHandle"),
-  save: el("save"), testBtn: el("test"), calibBtn: el("calib"), demoBtn: el("demoBtn"),
-  toggle: el("toggle"), toggleFloat: el("toggleFloat"), closePanel: el("closePanel"),
-  backdrop: el("backdrop"), showToken: el("showToken"), tokenNote: el("tokenNote"),
-  idNote: el("idNote"),
   tableToggle: el("tableToggle"), tableCard: el("tableCard"),
   tableBody: el("tableBody"), tableInfo: el("tableInfo"), tableStep: el("tableStep"),
   thTemp: el("thTemp"), thSpeed: el("thSpeed"), thPress: el("thPress"),
-  pressParam: el("pressParam"), pressUnit: el("pressUnit"),
-  humParam: el("humParam"), tableMinStep: el("tableMinStep"),
+  pressUnit: el("pressUnit"), tableMinStep: el("tableMinStep"),
 };
 
-const SVG_NS = "http://www.w3.org/2000/svg";
-const AR_ASPECT = 1389 / 1290;
+// hidden-поля управления (значения по умолчанию)
+(function ensureHidden() {
+  const need = { pivotX:"51", pivotY:"50.2", needleLen:"34", needleBase:"0",
+                 speedMax:"50", speedRed:"30" };
+  for (const [id, val] of Object.entries(need)) {
+    if (!ui[id]) {
+      const inp = document.createElement("input");
+      inp.id = id; inp.type = "hidden"; inp.value = val;
+      document.body.appendChild(inp); ui[id] = inp;
+    }
+  }
+  if (!ui.speedUnit) {
+    const sel = document.createElement("select"); sel.id = "speedUnit";
+    sel.innerHTML = '<option value="ms">м/с</option><option value="kmh">км/ч</option>';
+    document.body.appendChild(sel); ui.speedUnit = sel;
+  }
+  if (!ui.tempUnit) {
+    const sel = document.createElement("select"); sel.id = "tempUnit";
+    sel.innerHTML = '<option value="c">°C</option><option value="f">°F</option>';
+    document.body.appendChild(sel); ui.tempUnit = sel;
+  }
+  if (!ui.pressUnit) {
+    const sel = document.createElement("select"); sel.id = "pressUnit";
+    sel.innerHTML = '<option value="hpa">гПа</option><option value="mmhg">мм</option>';
+    document.body.appendChild(sel); ui.pressUnit = sel;
+  }
+  if (!ui.tableMinStep) {
+    const inp = document.createElement("input"); inp.id = "tableMinStep"; inp.type = "hidden"; inp.value = "10";
+    document.body.appendChild(inp); ui.tableMinStep = inp;
+  }
+})();
 
+const SVG_NS = "http://www.w3.org/2000/svg";
 let cumulativeRotation = 0;
 let currentAngle = null;
 let currentSpeed = null;
 let currentTemp = null;
 let historyPoints = [];
-let timer = null;
-let demoMode = true;
-let demoWalk = 208;
-let demoSpeed = 7;
-let demoTemp = 18;
-let calibrating = false;
+let tableRows = [];
 
 function clamp(v, a, b) { return Math.min(b, Math.max(a, v)); }
 
 /* ======================= КОМПАС ======================= */
-
-function geom() {
-  const px = clamp(Number(ui.pivotX.value) || 50, 5, 95);
-  const py = clamp(Number(ui.pivotY.value) || 50, 5, 95);
-  const L = Number(ui.needleLen.value) || 34;
-  return { px, py, L };
-}
-
-function roundPolygon(pts, radius) {
-  const n = pts.length;
-  const out = [];
-  for (let i = 0; i < n; i++) {
-    const p0 = pts[(i - 1 + n) % n], p1 = pts[i], p2 = pts[(i + 1) % n];
-    const v1 = [p0[0] - p1[0], p0[1] - p1[1]];
-    const v2 = [p2[0] - p1[0], p2[1] - p1[1]];
-    const l1 = Math.hypot(v1[0], v1[1]) || 1, l2 = Math.hypot(v2[0], v2[1]) || 1;
-    const r = Math.min(radius, l1 / 2, l2 / 2);
-    out.push([p1[0] + (v1[0] / l1) * r, p1[1] + (v1[1] / l1) * r]);
-    out.push([p1[0] + (v2[0] / l2) * r, p1[1] + (v2[1] / l2) * r]);
-  }
-  return out.map((p) => p[0].toFixed(2) + "," + p[1].toFixed(2)).join(" ");
-}
-
 const DIR = { W: 400, H: 330, cx: 200, cy: 165, R: 155 };
-
 function dirPolar(deg, r) {
   const a = (deg - 90) * Math.PI / 180;
   return [DIR.cx + r * Math.cos(a), DIR.cy + r * Math.sin(a)];
 }
-
-
 function buildNeedle() {
   const { cx, cy, R } = DIR;
   const f = (n) => n.toFixed(2);
-
   let ticks = "";
   for (let d = 0; d < 360; d += 10) {
-    const major = d % 90 === 0;
-    const mid = !major && d % 30 === 0;
+    const major = d % 90 === 0, mid = !major && d % 30 === 0;
     const r1 = R - (major ? 15 : (mid ? 11 : 7));
-    const [x1, y1] = dirPolar(d, r1);
-    const [x2, y2] = dirPolar(d, R);
+    const [x1, y1] = dirPolar(d, r1), [x2, y2] = dirPolar(d, R);
     const stroke = d === 0 ? "#ff6b6b" : "#8b9ab8";
     const width = major ? 2.4 : (mid ? 1.6 : 1.1);
     ticks += `<line x1="${f(x1)}" y1="${f(y1)}" x2="${f(x2)}" y2="${f(y2)}" stroke="${stroke}" stroke-width="${width}" stroke-linecap="round"/>`;
   }
-
   const names = [["С",0],["СВ",45],["В",90],["ЮВ",135],["Ю",180],["ЮЗ",225],["З",270],["СЗ",315]];
   let labels = "";
   for (const [n, d] of names) {
@@ -453,8 +327,6 @@ function buildNeedle() {
     const fill = n === "С" ? "#ff6b6b" : (card ? "#e8edf7" : "#8b9ab8");
     labels += `<text x="${f(tx)}" y="${f(ty)}" fill="${fill}" font-size="${card ? 20 : 14}" font-weight="${card ? 700 : 500}" font-family="Segoe UI, Roboto, Arial" text-anchor="middle" dominant-baseline="middle">${n}</text>`;
   }
-
-  // указатель: рисуем «на север», затем поворачиваем группу
   const tipY = cy - R - 6, baseY = cy - R + 16, hw = 10;
   const pointer = `
     <g id="dirPointer">
@@ -462,89 +334,64 @@ function buildNeedle() {
       <polygon points="${cx},${tipY} ${cx + hw},${baseY} ${cx},${baseY - 4} ${cx - hw},${baseY}"
                fill="#ffb020" stroke="#0e1421" stroke-width="1.4" stroke-linejoin="round"/>
     </g>`;
-
   ui.svg.innerHTML = `
-    <defs>
-      <linearGradient id="dirGrad" x1="0" y1="1" x2="0" y2="0">
-        <stop offset="0" stop-color="#38d39f"/>
-        <stop offset="0.6" stop-color="#ffb020"/>
-        <stop offset="1" stop-color="#ff6b6b"/>
-      </linearGradient>
-    </defs>
+    <defs><linearGradient id="dirGrad" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0" stop-color="#38d39f"/><stop offset="0.6" stop-color="#ffb020"/><stop offset="1" stop-color="#ff6b6b"/>
+    </linearGradient></defs>
     <circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="#2a3550" stroke-width="10"/>
     <circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="url(#dirGrad)" stroke-width="4" opacity="0.55"/>
-    ${ticks}
-    ${labels}
+    ${ticks}${labels}
     <circle cx="${cx}" cy="${cy}" r="58" fill="#141b2b" stroke="#2a3550" stroke-width="1.5"/>
     <text id="dirNum" x="${cx}" y="${cy - 5}" fill="#ffb020" font-size="46" font-weight="700" font-family="Segoe UI, Roboto, Arial" text-anchor="middle" dominant-baseline="middle">—</text>
     <text id="dirCap" x="${cx}" y="${cy + 30}" fill="#8b9ab8" font-size="16" letter-spacing="1.5" font-family="Segoe UI, Roboto, Arial" text-anchor="middle">—</text>
-    ${pointer}
-  `;
+    ${pointer}`;
   const g = ui.svg.querySelector("#dirPointer");
   if (g) g.style.transform = `rotate(${cumulativeRotation}deg)`;
   if (currentAngle !== null) setDirText(currentAngle);
 }
-
 function setDirText(angle) {
   const grad = Math.round(angle) % 360;
   const idx = Math.round(angle / 22.5) % 16;
-  const num = ui.svg.querySelector("#dirNum");
-  const cap = ui.svg.querySelector("#dirCap");
+  const num = ui.svg.querySelector("#dirNum"), cap = ui.svg.querySelector("#dirCap");
   if (num) num.textContent = `${grad}°`;
   if (cap) cap.textContent = RU[idx];
-  // служебные элементы — для совместимости
-  ui.value.innerHTML = `${grad}<small>°</small>`;
-  ui.dialDeg.textContent = `${grad}°`;
-  ui.dirText.textContent = RU[idx];
+  if (ui.value) ui.value.innerHTML = `${grad}<small>°</small>`;
+  if (ui.dialDeg) ui.dialDeg.textContent = `${grad}°`;
+  if (ui.dirText) ui.dirText.textContent = RU[idx];
 }
-
-function drawCompass(angle, opts = {}) {
+function drawCompass(angle) {
   if (angle === null || !Number.isFinite(angle)) return;
   const base = Number(ui.needleBase.value) || 0;
   const target = angle + base;
   const delta = ((target - cumulativeRotation) % 360 + 540) % 360 - 180;
   cumulativeRotation += delta;
   currentAngle = angle;
-
   const g = ui.svg.querySelector("#dirPointer");
   if (g) g.style.transform = `rotate(${cumulativeRotation}deg)`;
   setDirText(angle);
-  ui.dirFull.textContent = opts.full ? ` (${opts.full})` : "";
 }
 
 /* ======================= СПИДОМЕТР ======================= */
-
-
 function buildSpeedometer() {
-  const W = 400, H = 330;
-  const cx = W / 2, cy = H * 0.78;
-  const R = 155;
+  const W = 400, H = 330, cx = W / 2, cy = H * 0.78, R = 155;
   const START = -110, END = 110;
   const max = Math.max(1, Number(ui.speedMax.value) || 50);
   const red = clamp(Number(ui.speedRed.value) || Math.round(max * 0.6), 0, max);
-
-  const polar = (deg, r) => {
-    const a = (deg - 90) * Math.PI / 180;
-    return [cx + r * Math.cos(a), cy + r * Math.sin(a)];
-  };
+  const polar = (deg, r) => { const a = (deg - 90) * Math.PI / 180; return [cx + r * Math.cos(a), cy + r * Math.sin(a)]; };
   const arcPath = (fromDeg, toDeg, r) => {
-    const [x1, y1] = polar(fromDeg, r);
-    const [x2, y2] = polar(toDeg, r);
+    const [x1, y1] = polar(fromDeg, r), [x2, y2] = polar(toDeg, r);
     const large = Math.abs(toDeg - fromDeg) > 180 ? 1 : 0;
     const sweep = toDeg > fromDeg ? 1 : 0;
     return `M ${x1.toFixed(2)} ${y1.toFixed(2)} A ${r.toFixed(2)} ${r.toFixed(2)} 0 ${large} ${sweep} ${x2.toFixed(2)} ${y2.toFixed(2)}`;
   };
   const valToDeg = (v) => START + (clamp(v, 0, max) / max) * (END - START);
-
   let ticks = "";
   const step = max <= 20 ? 1 : (max <= 50 ? 5 : 10);
   for (let v = 0; v <= max + 1e-9; v += step) {
     const deg = valToDeg(v);
     const isMajor = (v % (step * 2) === 0) || v === 0 || Math.abs(v - max) < 1e-6;
     const r1 = R - (isMajor ? 14 : 8);
-    const r2 = R;
-    const [x1, y1] = polar(deg, r1);
-    const [x2, y2] = polar(deg, r2);
+    const [x1, y1] = polar(deg, r1), [x2, y2] = polar(deg, R);
     const stroke = v >= red ? "#ff6b6b" : "#8b9ab8";
     const width = isMajor ? 2.2 : 1.1;
     ticks += `<line x1="${x1.toFixed(2)}" y1="${y1.toFixed(2)}" x2="${x2.toFixed(2)}" y2="${y2.toFixed(2)}" stroke="${stroke}" stroke-width="${width}" stroke-linecap="round"/>`;
@@ -553,243 +400,143 @@ function buildSpeedometer() {
       ticks += `<text x="${tx.toFixed(2)}" y="${ty.toFixed(2)}" fill="#c9d2e0" font-size="14" font-family="Segoe UI, Roboto, Arial" text-anchor="middle" dominant-baseline="middle">${v}</text>`;
     }
   }
-
   const redFrom = valToDeg(red);
   const redArc = red < max
     ? `<path d="${arcPath(redFrom, END, R - 3)}" fill="none" stroke="#ff6b6b" stroke-width="6" stroke-linecap="round" opacity="0.85"/>`
     : "";
-
   ui.speedSvg.innerHTML = `
-    <defs>
-      <linearGradient id="spdGrad" x1="0" y1="1" x2="0" y2="0">
-        <stop offset="0" stop-color="#38d39f"/>
-        <stop offset="0.6" stop-color="#ffb020"/>
-        <stop offset="1" stop-color="#ff6b6b"/>
-      </linearGradient>
-    </defs>
+    <defs><linearGradient id="spdGrad" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0" stop-color="#38d39f"/><stop offset="0.6" stop-color="#ffb020"/><stop offset="1" stop-color="#ff6b6b"/>
+    </linearGradient></defs>
     <path d="${arcPath(START, END, R)}" fill="none" stroke="#2a3550" stroke-width="10" stroke-linecap="round"/>
     <path d="${arcPath(START, END, R)}" fill="none" stroke="url(#spdGrad)" stroke-width="4" stroke-linecap="round" opacity="0.55"/>
-    ${redArc}
-    ${ticks}
+    ${redArc}${ticks}
     <circle cx="${cx}" cy="${cy}" r="10" fill="#1d2740" stroke="#4a6ea8" stroke-width="1.6"/>
-    <circle cx="${cx}" cy="${cy}" r="3.4" fill="#ffb020"/>
-  `;
+    <circle cx="${cx}" cy="${cy}" r="3.4" fill="#ffb020"/>`;
 }
-
 function drawSpeed(value) {
   const max = Math.max(1, Number(ui.speedMax.value) || 50);
-  const W = 400, H = 330;
-  const cx = W / 2, cy = H * 0.78;
-  const R = 155;
+  const W = 400, H = 330, cx = W / 2, cy = H * 0.78, R = 155;
   const START = -110, END = 110;
   const unit = ui.speedUnit.value === "kmh" ? "км/ч" : "м/с";
-
   let needle = ui.speedSvg.querySelector("#speedNeedle");
   if (value === null || !Number.isFinite(value)) {
     if (needle) needle.remove();
     ui.speedNum.innerHTML = `—<small id="speedUnitSmall">${unit}</small>`;
     return;
   }
-
   const v = clamp(value, 0, max);
   const deg = START + (v / max) * (END - START);
   const rad = (deg - 90) * Math.PI / 180;
   const len = R - 34;
-  const x = cx + len * Math.cos(rad);
-  const y = cy + len * Math.sin(rad);
+  const x = cx + len * Math.cos(rad), y = cy + len * Math.sin(rad);
   const backLen = 16;
-  const bx = cx - backLen * Math.cos(rad);
-  const by = cy - backLen * Math.sin(rad);
-
+  const bx = cx - backLen * Math.cos(rad), by = cy - backLen * Math.sin(rad);
   if (!needle) {
     needle = document.createElementNS(SVG_NS, "g");
     needle.setAttribute("id", "speedNeedle");
-    needle.innerHTML = `
-      <line x1="${bx}" y1="${by}" x2="${x}" y2="${y}" stroke="#ffb020" stroke-width="4.2" stroke-linecap="round"/>
-      <circle cx="${cx}" cy="${cy}" r="6.5" fill="#ffb020"/>
-    `;
+    needle.innerHTML = `<line x1="${bx}" y1="${by}" x2="${x}" y2="${y}" stroke="#ffb020" stroke-width="4.2" stroke-linecap="round"/><circle cx="${cx}" cy="${cy}" r="6.5" fill="#ffb020"/>`;
     ui.speedSvg.appendChild(needle);
   } else {
     const line = needle.querySelector("line");
     line.setAttribute("x1", bx); line.setAttribute("y1", by);
     line.setAttribute("x2", x);  line.setAttribute("y2", y);
   }
-
   const shown = ui.speedUnit.value === "kmh" ? value * 3.6 : value;
   const decimals = shown < 10 ? 1 : 0;
   ui.speedNum.innerHTML = `${shown.toFixed(decimals)}<small id="speedUnitSmall">${unit}</small>`;
 }
 
-/* ======================= ГРАФИК ТЕМПЕРАТУРЫ ======================= */
-
-
+/* ======================= ГРАФИК ======================= */
 function buildTemperatureChart() {
-  const W = 1000, H = 260;
-  const padL = 44, padR = 16, padT = 16, padB = 30;
-  const plotW = W - padL - padR;
-  const plotH = H - padT - padB;
-
+  const W = 1000, H = 260, padL = 44, padR = 16, padT = 16, padB = 30;
+  const plotW = W - padL - padR, plotH = H - padT - padB;
   const pts = historyPoints;
   const hasData = pts.length >= 2;
-
-  // диапазон значений
-  let vmin = 0, vmax = 0;
+  let vmin = -10, vmax = 30;
   if (hasData) {
     vmin = Infinity; vmax = -Infinity;
     for (const p of pts) { if (p.v < vmin) vmin = p.v; if (p.v > vmax) vmax = p.v; }
     if (vmax - vmin < 1) { vmax += 0.5; vmin -= 0.5; }
-    const pad = (vmax - vmin) * 0.12;
-    vmin -= pad; vmax += pad;
-  } else {
-    vmin = -10; vmax = 30;
+    const pad = (vmax - vmin) * 0.12; vmin -= pad; vmax += pad;
   }
-
-  // диапазон времени
   let tmin = 0, tmax = 1;
   if (hasData) {
     tmin = pts[0].t; tmax = pts[pts.length - 1].t;
-    if (tmax - tmin < 1000) { tmax = tmin + 1000; }
+    if (tmax - tmin < 1000) tmax = tmin + 1000;
   }
-
   const xOf = (t) => padL + ((t - tmin) / (tmax - tmin)) * plotW;
   const yOf = (v) => padT + (1 - (v - vmin) / (vmax - vmin)) * plotH;
-
   const yToC = (v) => ui.tempUnit.value === "f" ? v * 9 / 5 + 32 : v;
   const unitLabel = ui.tempUnit.value === "f" ? "°F" : "°C";
-
   let svg = "";
-
-  // сетка и подписи по Y
   const yTicks = 5;
   for (let i = 0; i <= yTicks; i++) {
-    const v = vmin + (i / yTicks) * (vmax - vmin);
-    const y = yOf(v);
+    const v = vmin + (i / yTicks) * (vmax - vmin), y = yOf(v);
     svg += `<line x1="${padL}" y1="${y.toFixed(2)}" x2="${W - padR}" y2="${y.toFixed(2)}" stroke="#233052" stroke-width="1"/>`;
     svg += `<text x="${padL - 8}" y="${y.toFixed(2)}" fill="#8b9ab8" font-size="12" font-family="Segoe UI, Roboto, Arial" text-anchor="end" dominant-baseline="middle">${yToC(v).toFixed((vmax - vmin) < 6 ? 1 : 0)}°</text>`;
   }
-
-  // подписи по X — первая, середина, последняя
   if (hasData) {
-    const fmt = (t) => {
-      const d = new Date(t);
+    const fmt = (t) => { const d = new Date(t);
       const hm = d.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
-      return d.toDateString() === new Date().toDateString()
-        ? hm
-        : d.toLocaleDateString("ru-RU", { day: "2-digit", month: "2-digit" }) + " " + hm;
-    };
-    const xs = [
-      { t: tmin, a: "start" },
-      { t: (tmin + tmax) / 2, a: "middle" },
-      { t: tmax, a: "end" }
-    ];
+      return d.toDateString() === new Date().toDateString() ? hm
+        : d.toLocaleDateString("ru-RU", { day: "2-digit", month: "2-digit" }) + " " + hm; };
+    const xs = [{ t: tmin, a: "start" }, { t: (tmin + tmax) / 2, a: "middle" }, { t: tmax, a: "end" }];
     for (const x of xs) {
       const px = xOf(x.t);
       svg += `<text x="${px.toFixed(2)}" y="${H - 8}" fill="#8b9ab8" font-size="12" font-family="Segoe UI, Roboto, Arial" text-anchor="${x.a}">${fmt(x.t)}</text>`;
     }
   }
-
-  // ось Y и X
   svg += `<line x1="${padL}" y1="${padT}" x2="${padL}" y2="${H - padB}" stroke="#3b4d78" stroke-width="1.2"/>`;
   svg += `<line x1="${padL}" y1="${H - padB}" x2="${W - padR}" y2="${H - padB}" stroke="#3b4d78" stroke-width="1.2"/>`;
-
-  // линия и заливка — красная (>0°) / синяя (<0°)
   if (hasData) {
     const y0 = yOf(0); const y0c = Math.min(H-padB, Math.max(padT, y0));
-    const segs = []; let cur = null;
-    for (let i = 0; i < pts.length; i++) {
-      const p = pts[i]; const x = xOf(p.t), y = yOf(p.v); const pos = p.v >= 0;
-      if (!cur) { cur = { pos, pts: [{ x, y }] }; segs.push(cur); continue; }
-      if (cur.pos !== pos) {
-        const pp = pts[i-1]; const r2 = (0-pp.v)/(p.v-pp.v);
-        const xc = xOf(pp.t) + r2*(x-xOf(pp.t));
-        cur.pts.push({ x: xc, y: y0c });
-        cur = { pos, pts: [{ x: xc, y: y0c }] }; segs.push(cur);
-      }
-      cur.pts.push({ x, y });
-    }
-    segs.forEach((seg, i) => {
-      const col = seg.pos ? "#ff6b6b" : "#4da6ff";
-      const inner = seg.pts.map((p) => `${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(" ");
-      const f = seg.pts[0], l2 = seg.pts[seg.pts.length-1];
-      const area = `${f.x.toFixed(2)},${y0c.toFixed(2)} `+inner+` ${l2.x.toFixed(2)},${y0c.toFixed(2)}`;
-      const gid = `tf${i}`;
-      svg += `<defs><linearGradient id="${gid}" x1="0" y1="${seg.pos?0:1}" x2="0" y2="${seg.pos?1:0}"><stop offset="0" stop-color="${col}" stop-opacity="0.38"/><stop offset="1" stop-color="${col}" stop-opacity="0"/></linearGradient></defs>`;
-      svg += `<polygon points="${area}" fill="url(#${gid})" stroke="none"/>`;
-      svg += `<polyline points="${inner}" fill="none" stroke="${col}" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>`;
-    });
-    if (y0>padT && y0<H-padB) svg += `<line x1="${padL}" y1="${y0.toFixed(2)}" x2="${W-padR}" y2="${y0.toFixed(2)}" stroke="#6b7fa0" stroke-width="1" stroke-dasharray="4 3"/>`;
-    const last = pts[pts.length-1]; const dotCol = last.v>=0 ? "#ff6b6b" : "#4da6ff";
-    svg += `<circle cx="${xOf(last.t).toFixed(2)}" cy="${yOf(last.v).toFixed(2)}" r="4" fill="${dotCol}" stroke="#0e1421" stroke-width="1.5"/>`;
+    const line = pts.map((p) => `${xOf(p.t).toFixed(2)},${yOf(p.v).toFixed(2)}`).join(" ");
+    const f = pts[0], l2 = pts[pts.length-1];
+    const area = `${xOf(f.t).toFixed(2)},${y0c.toFixed(2)} ` + line + ` ${xOf(l2.t).toFixed(2)},${y0c.toFixed(2)}`;
+    svg += `<defs><linearGradient id="tfMain" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff6b6b" stop-opacity="0.38"/><stop offset="1" stop-color="#ff6b6b" stop-opacity="0"/></linearGradient></defs>`;
+    svg += `<polygon points="${area}" fill="url(#tfMain)" stroke="none"/>`;
+    svg += `<polyline points="${line}" fill="none" stroke="#ff6b6b" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>`;
+    if (y0 > padT && y0 < H-padB) svg += `<line x1="${padL}" y1="${y0.toFixed(2)}" x2="${W-padR}" y2="${y0.toFixed(2)}" stroke="#6b7fa0" stroke-width="1" stroke-dasharray="4 3"/>`;
+    const last = pts[pts.length-1];
+    svg += `<circle cx="${xOf(last.t).toFixed(2)}" cy="${yOf(last.v).toFixed(2)}" r="4" fill="#ff6b6b" stroke="#0e1421" stroke-width="1.5"/>`;
   } else {
     svg += `<text x="${W / 2}" y="${H / 2}" fill="#5b6b8e" font-size="16" font-family="Segoe UI, Roboto, Arial" text-anchor="middle">нет данных для графика</text>`;
   }
-
   ui.tempSvg.innerHTML = svg;
-
-  // последнее значение в шапке
   if (hasData) {
     const last = pts[pts.length - 1];
     const shown = yToC(last.v);
-    ui.chartLast.style.color = last.v >= 0 ? "#ff6b6b" : "#4da6ff";
+    ui.chartLast.style.color = "#ff6b6b";
     ui.chartLast.innerHTML = `${shown.toFixed(1)}<small>${unitLabel}</small>`;
   } else {
     ui.chartLast.innerHTML = `—<small>${unitLabel}</small>`;
   }
 }
 
-/* ======================= СТАТУС / ПАНЕЛЬ ======================= */
-
-
-let tableRows = [];     // новые сверху: {t, temp, dir, speed}
-let localRows = [];     // запасной вариант, если история недоступна
-
-function toNum(x) {
-  if (x === undefined || x === null || x === "") return null;
-  const n = Number(String(x).replace(",", "."));
-  return Number.isFinite(n) ? n : null;
-}
-
-function addLiveRow(angle, speed, temp) {
-  const now = Date.now();
-  if (angle !== null || speed !== null || temp !== null) {
-    if (!localRows.length || now - localRows[0].t > 1000) {
-      localRows.unshift({ t: now, temp, dir: angle, speed, press: null, hum: null });
-    }
-  }
-  localRows = localRows.filter((r) => r.t >= now - TABLE_WINDOW).slice(0, 2000);
-  return localRows.slice();
-}
-
+/* ======================= ТАБЛИЦА ======================= */
 function renderTable() {
-  const kmh   = ui.speedUnit.value === "kmh";
-  const fahr  = ui.tempUnit.value  === "f";
-  const mmhg  = ui.pressUnit.value === "mmhg";
-  ui.thTemp.textContent  = `Темп., ${fahr ? "°F" : "°C"}`;
+  const kmh = ui.speedUnit.value === "kmh";
+  const fahr = ui.tempUnit.value === "f";
+  const mmhg = ui.pressUnit.value === "mmhg";
+  ui.thTemp.textContent = `Темп., ${fahr ? "°F" : "°C"}`;
   ui.thSpeed.textContent = `Скор., ${kmh ? "км/ч" : "м/с"}`;
   ui.thPress.textContent = `Давл., ${mmhg ? "мм" : "гПа"}`;
-
-  // Минимальный шаг — из поля настроек (убираем дубли ±minStep секунд)
-  // Шаг по списку — в минутах
-  const minStepMs = Math.max(1, Number(ui.tableMinStep.value) || 10) * 1000;
-  const stepMin   = Number(ui.tableStep.value) || 0;
-  const stepMs    = stepMin > 0 ? stepMin * 60000 : (minStepMs > 1000 ? minStepMs : 1);
+  const stepMin = Number(ui.tableStep.value) || 0;
+  const stepMs = stepMin > 0 ? stepMin * 60000 : 10000;
   let rows = tableRows;
-  {
-    const seen = new Map();
-    rows = rows.filter((r) => {
-      const k = Math.floor(r.t / stepMs);
-      if (seen.has(k)) return false;
-      seen.set(k, true);
-      return true;
-    });
-  }
-
+  const seen = new Map();
+  rows = rows.filter((r) => {
+    const k = Math.floor(r.t / stepMs);
+    if (seen.has(k)) return false;
+    seen.set(k, true);
+    return true;
+  });
   if (!rows.length) {
     ui.tableBody.innerHTML = '<tr><td class="empty" colspan="6">Нет данных за последние 6 часов</td></tr>';
     ui.tableInfo.textContent = "нет данных";
     return;
   }
-
   const today = new Date().toDateString();
   const pad = (n) => String(n).padStart(2, "0");
   const hms = (d) => `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
@@ -800,51 +547,48 @@ function renderTable() {
     const temp = r.temp === null ? "—" : (fahr ? r.temp * 9 / 5 + 32 : r.temp).toFixed(1);
     const speed = r.speed === null ? "—" : (kmh ? r.speed * 3.6 : r.speed).toFixed(1);
     let dir = "—";
-    if (r.dir !== null) {
-      dir = `${Math.round(r.dir) % 360}°<small>${RU[Math.round(r.dir / 22.5) % 16]}</small>`;
-    }
+    if (r.dir !== null) dir = `${Math.round(r.dir) % 360}°<small>${RU[Math.round(r.dir / 22.5) % 16]}</small>`;
     const press = r.press === null ? "—" : (mmhg ? r.press * 0.750064 : r.press).toFixed(1);
-    const hum   = r.hum   === null ? "—" : r.hum.toFixed(1) + "%";
+    const hum = r.hum === null ? "—" : r.hum.toFixed(1) + "%";
     out.push(`<tr><td class="t-time">${hms(d)}${date}</td><td class="t-temp">${temp}</td><td class="t-dir">${dir}</td><td class="t-speed">${speed}</td><td class="t-press">${press}</td><td class="t-hum">${hum}</td></tr>`);
   }
   ui.tableBody.innerHTML = out.join("");
-
   const hm = (t) => { const d = new Date(t); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
   let info = `с ${hm(rows[rows.length - 1].t)} по ${hm(rows[0].t)} · записей: ${rows.length}`;
-  const span = tableRows.length ? tableRows[0].t - tableRows[tableRows.length - 1].t : 0;
-  if (span < TABLE_WINDOW - 10 * 60000) {
-    const h = Math.floor(span / 3600000), m = Math.round((span % 3600000) / 60000);
-    info += ` · платформа отдала ${h} ч ${m} мин`;
-  }
   ui.tableInfo.textContent = info;
 }
 
-/* ---- init ---- */
+/* ======================= ИНИЦИАЛИЗАЦИЯ ======================= */
 buildNeedle();
 buildSpeedometer();
+
 if (CUR.value != null) drawCompass(Number(CUR.value));
 if (CUR.speed != null) drawSpeed(Number(CUR.speed));
-historyPoints = HIST.filter(r => r.temp != null).map(r => ({ t: r.t, v: r.temp })).slice(-120);
+
+historyPoints = HIST.filter((r) => r.temp != null).map((r) => ({ t: r.t, v: r.temp }));
+const nChart = Math.max(10, Number(ui.tempLimit?.value) || 120);
+if (historyPoints.length > nChart) historyPoints = historyPoints.slice(-nChart);
 buildTemperatureChart();
+
 tableRows = HIST.slice().reverse();
 renderTable();
+
 if (CUR.ts) {
-  const t = new Date(CUR.ts).toLocaleTimeString("ru-RU");
-  ui.status.textContent = `Rightech API · dir=${CUR.value}° · ${CUR.speed} м/с · ${CUR.temp}°C · ${t}`;
+  const t = new Date(Number(CUR.ts)).toLocaleTimeString("ru-RU");
+  const spd = CUR.speed != null ? `  ·  ${CUR.speed} м/с` : "";
+  const tmp = CUR.temp  != null ? `  ·  ${CUR.temp}°C`   : "";
+  ui.status.textContent = `Rightech API · windDirection = ${CUR.value}${spd}${tmp}  ·  ${t}`;
   ui.status.className = "status is-ok";
+  ui.badge.textContent = "онлайн";
 }
+
+/* ======================= СОБЫТИЯ ======================= */
 ui.tableToggle.addEventListener("click", () => {
   const open = !ui.tableCard.classList.contains("open");
   ui.tableCard.classList.toggle("open", open);
   ui.tableToggle.setAttribute("aria-expanded", String(open));
-  try { localStorage.setItem("tbl_open", open?"1":"0"); } catch(e){}
 });
-try { if(localStorage.getItem("tbl_open")==="1"){ui.tableCard.classList.add("open");ui.tableToggle.setAttribute("aria-expanded","true");} } catch(e){}
-ui.tableStep.addEventListener("change", () => {
-  try { localStorage.setItem("tbl_step", ui.tableStep.value); } catch(e){}
-  renderTable();
-});
-try { const sv=localStorage.getItem("tbl_step"); if(sv) ui.tableStep.value=sv; } catch(e){}
+ui.tableStep.addEventListener("change", renderTable);
 </script>
 </body>
 </html>
