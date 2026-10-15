@@ -39,6 +39,7 @@ def api_get(path):
 
 
 def find_deep(obj, key, depth=0):
+    """Регистронезависимый поиск ключа на любой глубине (аналог findKeyDeep в JS)."""
     if obj is None or depth > 8:
         return None
     if isinstance(obj, str):
@@ -50,8 +51,12 @@ def find_deep(obj, key, depth=0):
                 return None
         return None
     if isinstance(obj, dict):
-        if key in obj:
-            return obj[key]
+        lk = str(key).lower()
+        for k in obj.keys():
+            if str(k).lower() == lk:
+                v = obj[k]
+                if v is not None and not isinstance(v, (dict, list)):
+                    return v
         for v in obj.values():
             r = find_deep(v, key, depth + 1)
             if r is not None:
@@ -110,7 +115,6 @@ def packet_time_ms(p):
 
 
 def fetch_history(hours=6, limit=1000):
-    """Возвращает список пакетов как есть (один пакет = одна строка)."""
     to_dt = datetime.now(timezone.utc)
     from_dt = to_dt - timedelta(hours=hours)
     fmt = "%Y-%m-%dT%H:%M"
@@ -136,108 +140,64 @@ def fetch_history(hours=6, limit=1000):
             "press": to_num(find_deep(p, PARAM_PRESS)),
             "hum": to_num(find_deep(p, PARAM_HUM)),
         })
-    # сортировка по времени по возрастанию
     rows.sort(key=lambda r: r["t"])
-    # фильтр: только пакеты, где есть хоть что-то
     rows = [r for r in rows if any(r[k] is not None for k in ("temp", "dir", "speed", "press", "hum"))]
     return rows
-
-
-# ---------------------------------------------------------------------------
-# HTML виджета — ваш полный дизайн (роза ветров, спидометр, сворачивающаяся
-# таблица, график), данные приходят из Python через window.__CUR__ / __HIST__.
-# ---------------------------------------------------------------------------
 WIDGET_HTML = r"""<!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="utf-8">
 <style>
   :root{
-    --bg:#0f1420;
-    --panel:#161d2e;
-    --panel-2:#1d2740;
-    --line:#2a3550;
-    --text:#e8edf7;
-    --muted:#8b9ab8;
-    --accent:#ffb020;
-    --ok:#38d39f;
-    --err:#ff6b6b;
+    --bg:#0f1420; --panel:#161d2e; --panel-2:#1d2740; --line:#2a3550;
+    --text:#e8edf7; --muted:#8b9ab8; --accent:#ffb020; --ok:#38d39f; --err:#ff6b6b;
   }
   *{box-sizing:border-box}
   html,body{height:100%}
-  body{
-    margin:0;
-    background:radial-gradient(1400px 800px at 40% -10%, #1b2740 0%, var(--bg) 60%);
-    color:var(--text);
-    font:14px/1.45 "Segoe UI", Roboto, Arial, sans-serif;
-    overflow-x:hidden;
-  }
+  body{margin:0;background:radial-gradient(1400px 800px at 40% -10%, #1b2740 0%, var(--bg) 60%);
+       color:var(--text);font:14px/1.45 "Segoe UI", Roboto, Arial, sans-serif;overflow-x:hidden}
   .stage{display:flex;flex-direction:column;gap:14px;padding:12px}
   .head{display:flex;align-items:center;justify-content:space-between;gap:12px}
   .head h1{font-size:16px;font-weight:600;margin:0}
   .badge{font-size:11px;color:var(--muted);border:1px solid var(--line);padding:2px 8px;border-radius:999px;margin-left:8px}
-
   .row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-  .gauge{
-    display:flex;flex-direction:column;gap:8px;min-width:0;
-    background:linear-gradient(180deg,#141b2b 0%,#0e1421 100%);
-    border-radius:18px;
-    box-shadow:0 16px 44px rgba(0,0,0,.45),0 0 0 1px rgba(255,255,255,.05);
-    padding:12px;
-  }
+  .gauge{display:flex;flex-direction:column;gap:8px;min-width:0;
+         background:linear-gradient(180deg,#141b2b 0%,#0e1421 100%);
+         border-radius:18px;box-shadow:0 16px 44px rgba(0,0,0,.45),0 0 0 1px rgba(255,255,255,.05);padding:12px}
   .gauge__title{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
-
   .dir-wrap{position:relative;width:100%;aspect-ratio:400/330}
   .dir-wrap svg{position:absolute;inset:0;width:100%;height:100%;display:block}
   #dirPointer{transform-origin:200px 165px;transition:transform .9s cubic-bezier(.22,.68,.24,1)}
-
   .speed-wrap{position:relative;width:100%;aspect-ratio:400/330}
   .speed-wrap svg{position:absolute;inset:0;width:100%;height:100%;display:block}
   .speed-value{position:absolute;left:50%;top:66%;transform:translate(-50%,-50%);text-align:center;pointer-events:none}
   .speed-value__num{font-size:clamp(24px,5vh,52px);font-weight:700;color:var(--accent);line-height:1;font-variant-numeric:tabular-nums}
   .speed-value__num small{font-size:.42em;font-weight:600;margin-left:4px;color:var(--muted)}
   .speed-value__cap{margin-top:4px;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
-
-  .chart-card{
-    background:linear-gradient(180deg,#141b2b 0%,#0e1421 100%);
-    border-radius:18px;
-    box-shadow:0 16px 44px rgba(0,0,0,.45),0 0 0 1px rgba(255,255,255,.05);
-    padding:12px 14px 8px;
-  }
+  .chart-card{background:linear-gradient(180deg,#141b2b 0%,#0e1421 100%);border-radius:18px;
+              box-shadow:0 16px 44px rgba(0,0,0,.45),0 0 0 1px rgba(255,255,255,.05);padding:12px 14px 8px}
   .chart-card__head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:6px;flex-wrap:wrap}
   .chart-card__head h2{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:0;font-weight:600}
   .chart-card__last{font-size:22px;font-weight:700;color:var(--accent);font-variant-numeric:tabular-nums}
   .chart-card__last small{font-size:.55em;color:var(--muted);margin-left:4px;font-weight:600}
   .chart-wrap{position:relative;width:100%;aspect-ratio:1000/260}
   .chart-wrap svg{position:absolute;inset:0;width:100%;height:100%;display:block}
-
-  .table-card{
-    background:linear-gradient(180deg,#141b2b 0%,#0e1421 100%);
-    border-radius:18px;
-    box-shadow:0 16px 44px rgba(0,0,0,.45),0 0 0 1px rgba(255,255,255,.05);
-    padding:12px 14px 10px;
-  }
+  .table-card{background:linear-gradient(180deg,#141b2b 0%,#0e1421 100%);border-radius:18px;
+              box-shadow:0 16px 44px rgba(0,0,0,.45),0 0 0 1px rgba(255,255,255,.05);padding:12px 14px 10px}
   .table-ctl{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
   .table-ctl label{margin:0;white-space:nowrap}
   .table-ctl select{width:auto;padding:5px 8px;font-size:12px;background:var(--panel-2);border:1px solid var(--line);color:var(--text);border-radius:9px}
   .table-scroll{max-height:380px;overflow:auto;border-radius:10px;box-shadow:0 0 0 1px rgba(255,255,255,.06)}
-  .table-toggle{
-    display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none;
-    width:100%;background:none;border:none;padding:0;color:inherit;text-align:left;
-    font:inherit;
-  }
+  .table-toggle{display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none;
+                width:100%;background:none;border:none;padding:0;color:inherit;text-align:left;font:inherit}
   .table-arrow{margin-left:auto;flex-shrink:0;width:20px;height:20px;opacity:.55;transition:transform .25s}
   .table-card.open .table-arrow{transform:rotate(180deg);opacity:.9}
   .table-body-wrap{display:grid;grid-template-rows:0fr;transition:grid-template-rows .28s ease}
   .table-body-wrap>div{overflow:hidden}
   .table-card.open .table-body-wrap{grid-template-rows:1fr}
-
   .data-table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:14px}
-  .data-table th{
-    position:sticky;top:0;background:#182036;color:var(--muted);
-    font-size:10px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;
-    text-align:right;padding:8px 12px;white-space:nowrap;
-  }
+  .data-table th{position:sticky;top:0;background:#182036;color:var(--muted);font-size:10px;letter-spacing:.12em;
+                 text-transform:uppercase;font-weight:600;text-align:right;padding:8px 12px;white-space:nowrap}
   .data-table th:first-child,.data-table td:first-child{text-align:left}
   .data-table td{text-align:right;padding:6px 12px;border-top:1px solid rgba(255,255,255,.05);color:#e8edf7}
   .data-table td.t-time{color:var(--muted)}
@@ -246,7 +206,6 @@ WIDGET_HTML = r"""<!DOCTYPE html>
   .data-table td.t-dir small{color:var(--muted);margin-left:6px}
   .data-table td.t-press,.data-table td.t-hum{color:#a0b4d8}
   .data-table td.empty{text-align:center;color:var(--muted);padding:22px}
-
   .status{text-align:center;font-size:12px;color:var(--muted);min-height:18px}
   .status.is-ok{color:var(--ok)}
   .status.is-err{color:var(--err)}
@@ -259,7 +218,6 @@ WIDGET_HTML = r"""<!DOCTYPE html>
       <h1>Метеостанция<span class="badge" id="modeBadge">онлайн</span></h1>
     </div>
   </div>
-
   <div class="row">
     <div class="gauge">
       <div class="gauge__title">Направление ветра</div>
@@ -267,7 +225,6 @@ WIDGET_HTML = r"""<!DOCTYPE html>
         <svg id="needleSvg" viewBox="0 0 400 330" preserveAspectRatio="xMidYMid meet"></svg>
       </div>
     </div>
-
     <div class="gauge">
       <div class="gauge__title">Скорость ветра</div>
       <div class="speed-wrap" id="speedWrap">
@@ -279,18 +236,14 @@ WIDGET_HTML = r"""<!DOCTYPE html>
       </div>
     </div>
   </div>
-
   <div class="chart-card">
     <div class="chart-card__head">
       <h2>Температура · последние <span id="chartPointsLabel">120</span> точек</h2>
       <div class="chart-card__last" id="chartLast">—<small>°C</small></div>
     </div>
-    <div class="chart-wrap">
-      <svg id="tempSvg" viewBox="0 0 1000 260" preserveAspectRatio="none"></svg>
-    </div>
+    <div class="chart-wrap"><svg id="tempSvg" viewBox="0 0 1000 260" preserveAspectRatio="none"></svg></div>
     <div class="status" id="status">Данные Rightech</div>
   </div>
-
   <div class="table-card" id="tableCard">
     <button class="table-toggle" id="tableToggle" aria-expanded="false">
       <span>ДАННЫЕ ЗА 6 ЧАСОВ · <span id="tableInfo">нет данных</span></span>
@@ -322,7 +275,6 @@ WIDGET_HTML = r"""<!DOCTYPE html>
     </div>
   </div>
 </div>
-
 <script>
 "use strict";
 const CUR = window.__CUR__ || {};
@@ -333,7 +285,7 @@ const el = (id) => document.getElementById(id);
 const ui = {
   svg: el("needleSvg"), status: el("status"), badge: el("modeBadge"),
   speedSvg: el("speedSvg"), speedNum: el("speedNum"),
-  tempSvg: el("tempSvg"), chartLast: el("chartLast"), chartPointsLabel: el("chartPointsLabel"),
+  tempSvg: el("tempSvg"), chartLast: el("chartLast"),
   tableToggle: el("tableToggle"), tableCard: el("tableCard"),
   tableBody: el("tableBody"), tableInfo: el("tableInfo"), tableStep: el("tableStep"),
 };
@@ -345,7 +297,7 @@ let tableRows = [];
 
 function clamp(v, a, b) { return Math.min(b, Math.max(a, v)); }
 
-/* ---------------- КОМПАС ---------------- */
+/* КОМПАС */
 const DIR = { cx: 200, cy: 165, R: 155 };
 function dirPolar(deg, r) {
   const a = (deg - 90) * Math.PI / 180;
@@ -407,8 +359,7 @@ function drawCompass(angle) {
   if (g) g.style.transform = `rotate(${cumulativeRotation}deg)`;
   setDirText(angle);
 }
-
-/* ---------------- СПИДОМЕТР ---------------- */
+/* СПИДОМЕТР */
 function buildSpeedometer() {
   const W = 400, H = 330, cx = W/2, cy = H*0.78, R = 155, START = -110, END = 110;
   const polar = (d, r) => { const a = (d-90)*Math.PI/180; return [cx + r*Math.cos(a), cy + r*Math.sin(a)]; };
@@ -471,7 +422,7 @@ function drawSpeed(value) {
   ui.speedNum.innerHTML = `${shown.toFixed(decimals)}<small>м/с</small>`;
 }
 
-/* ---------------- ГРАФИК ---------------- */
+/* ГРАФИК */
 function buildTemperatureChart() {
   const W = 1000, H = 260, padL = 44, padR = 16, padT = 16, padB = 30;
   const plotW = W - padL - padR, plotH = H - padT - padB;
@@ -521,7 +472,7 @@ function buildTemperatureChart() {
   }
 }
 
-/* ---------------- ТАБЛИЦА ---------------- */
+/* ТАБЛИЦА */
 function renderTable() {
   const stepMin = Number(ui.tableStep.value) || 0;
   const stepMs = stepMin > 0 ? stepMin * 60000 : 10000;
@@ -557,7 +508,7 @@ function renderTable() {
   ui.tableInfo.textContent = `с ${hm(rows[rows.length-1].t)} по ${hm(rows[0].t)} · записей: ${rows.length}`;
 }
 
-/* ---------------- ИНИЦИАЛИЗАЦИЯ ---------------- */
+/* ИНИЦИАЛИЗАЦИЯ */
 buildNeedle();
 buildSpeedometer();
 if (CUR.value !== undefined && CUR.value !== null) {
@@ -567,10 +518,8 @@ if (CUR.value !== undefined && CUR.value !== null) {
 if (CUR.speed !== undefined && CUR.speed !== null) {
   drawSpeed(Number(CUR.speed));
 }
-// история для графика (по возрастанию t)
 historyPoints = HIST.filter(r => r.temp !== null).map(r => ({ t: r.t, v: r.temp }));
 buildTemperatureChart();
-// история для таблицы — новые сверху
 tableRows = HIST.slice().reverse();
 renderTable();
 
@@ -580,7 +529,6 @@ if (CUR.ts) {
   ui.status.className = "status is-ok";
 }
 
-/* ---------------- СОБЫТИЯ ---------------- */
 ui.tableToggle.addEventListener("click", () => {
   ui.tableCard.classList.toggle("open");
   ui.tableToggle.setAttribute("aria-expanded", String(ui.tableCard.classList.contains("open")));
@@ -590,14 +538,11 @@ ui.tableStep.addEventListener("change", renderTable);
 </body>
 </html>
 """
-
-
 def build_widget_html(cur, hist):
     cur_json = json.dumps(cur or {}, ensure_ascii=False)
     hist_json = json.dumps(hist or [], ensure_ascii=False)
     inject = f"<script>window.__CUR__ = {cur_json}; window.__HIST__ = {hist_json};</script>"
     return WIDGET_HTML.replace("</head>", inject + "</head>")
-
 
 st.markdown(
     """
